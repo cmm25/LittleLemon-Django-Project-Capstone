@@ -43,6 +43,26 @@ class MenuItemListView(generics.ListCreateAPIView):
                         permission_classes = [IsAdminUser, IsAuthenticated]
                 return [permission() for permission in permission_classes]
 
+class MenuItemDetailView(generics.RetrieveUpdateDestroyAPIView):
+        throttle_classes = [AnonRateThrottle, UserRateThrottle]
+        queryset = MenuItem.objects.all()
+        serializer_class = MenuItemSerializer
+
+        def get_permissions(self):
+                permission_classes = [IsAuthenticated]
+                if self.request.method == 'PATCH':
+                        permission_classes = [IsAuthenticated, IsManager | IsAdminUser]
+                if self.request.method == "DELETE":
+                        permission_classes = [IsAuthenticated, IsAdminUser]
+                return[permission() for permission in permission_classes]
+        
+        def patch(self, request, *args, **kwargs):
+                menuitem = MenuItem.objects.get(pk=self.kwargs['pk'])
+                menuitem.featured = not menuitem.featured
+                menuitem.save()
+                return JsonResponse(status=200, data={'message':'Featured status of {} changed to {}'.format(str(menuitem.title) ,str(menuitem.featured))})
+
+
 
 class CategoryView(generics.ListCreateAPIView):
         throttle_classes = [AnonRateThrottle, UserRateThrottle]
